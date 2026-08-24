@@ -32,6 +32,7 @@ Docker MTProxy Backend (Port 8443)
        │
        ▼
 Telegram Infrastructure
+
 Telegram Desktop (WebView2): Маскирует трафик под стандартные HTTP/2 запросы (/api/v1/up и /api/v1/down) с реальными браузерными заголовками (Edge/Chrome).
 
 Cloudflare / DNS: Запись поддомена должна быть строго в режиме DNS only (серое облако). Проксирование Cloudflare (WAF/Challenge) блокирует скрытые фоновые запросы WebView.
@@ -49,46 +50,45 @@ Docker MTProxy (Backend 8443): Принимает очищенный трафи�
 1. Сгенерируйте секретный ключ
 Для работы прокси нужен 32-значный hex-ключ. Сгенерируйте его прямо в консоли командой:
 
-Bash
 openssl rand -hex 16
+
 (Скопируйте полученную строку — это ваш пароль для подключения).
 
 2. Скачайте и запустите установщик
 
-Bash
 # Скачиваем скрипт
-wget [https://raw.githubusercontent.com/Kaprojennoe/telegram-web-proxy-setup/main/install.sh](https://raw.githubusercontent.com/Kaprojennoe/telegram-web-proxy-setup/main/install.sh)
+wget https://raw.githubusercontent.com/Kaprojennoe/telegram-web-proxy-setup/main/install.sh
 
 # Делаем скрипт исполняемым
 chmod +x install.sh
 
 # Запускаем (замените на ваш домен и сгенерированный 32-значный hex-секрет)
 sudo ./install.sh proxy.example.com YOUR_SECRET_32_HEX
+
 (Если вы предпочитаете контролировать каждый шаг сборки, ниже приведена инструкция по ручной установке).
 
 🛠 Ручная установка
 1. Запуск Backend MTProxy (Docker)
 Запускаем официальный контейнер на локальном порту 8443:
 
-Bash
 docker run -d \
   --name tg-web-backend \
   --restart always \
   -p 127.0.0.1:8443:443 \
   -e SECRET=YOUR_SECRET_32_HEX \
   telegrammessenger/proxy:latest
+
 2. Сборка tproxy-server
 Устанавливаем компилятор Go и собираем бинарник ретранслятора:
 
-Bash
 sudo apt update && sudo apt install -y golang git
 cd ~
-git clone [https://github.com/telegramdesktop/tproxy-server.git](https://github.com/telegramdesktop/tproxy-server.git)
+git clone https://github.com/telegramdesktop/tproxy-server.git
 cd tproxy-server
 go build -o tproxy-server ./cmd/tproxy-server
 sudo mv tproxy-server /usr/local/bin/
+
 3. Настройка конфигурации и заглушки
-Bash
 # Создание рабочих директорий
 sudo mkdir -p /etc/tproxy-server /srv/tproxy-site
 
@@ -121,14 +121,11 @@ EOF
 
 # КРИТИЧЕСКИ ВАЖНО: строгие права на файл профилей (демон проверяет безопасность)
 sudo chmod 600 /etc/tproxy-server/profiles.json
+
 4. Создание службы Systemd
 Создаем службу для автозапуска ретранслятора:
-
-Bash
 sudo nano /etc/systemd/system/tg-web-relay.service
 Вставляем содержимое:
-
-Ini, TOML
 [Unit]
 Description=Telegram WEB Proxy Relay
 After=network.target
@@ -143,14 +140,10 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target
 Запускаем:
-
-Bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now tg-web-relay
 5. Настройка веб-сервера Caddy
 Редактируем /etc/caddy/Caddyfile:
-
-Фрагмент кода
 {
     servers {
         protocols h1 h2
@@ -165,9 +158,8 @@ proxy.example.com {
     }
 }
 Перезапускаем Caddy:
-
-Bash
 sudo systemctl restart caddy
+
 ⚙️ Настройка в Telegram Desktop
 Перейдите в Настройки ➔ Продвинутые настройки ➔ Тип соединения ➔ Использовать собственный прокси.
 
