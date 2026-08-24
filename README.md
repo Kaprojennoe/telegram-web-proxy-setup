@@ -50,7 +50,6 @@ chmod +x install.sh
 
 # 3. Запускаем (замените на ваш домен и 32-значный hex-секрет)
 sudo ./install.sh proxy.example.com YOUR_SECRET_32_HEX
-
 ### 1. Запуск Backend MTProxy (Docker)
 Запускаем официальный контейнер на локальном порту `8443`:
 ```bash
