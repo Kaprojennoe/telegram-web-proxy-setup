@@ -1,47 +1,52 @@
-# Telegram WEB Proxy Deployment Guide
+# Telegram Experimental WEB Proxy (Desktop Only)
 
-Руководство по практическому развертыванию экспериментального прокси-транспорта Telegram (`telegramdesktop/tproxy-server`) на базе **Caddy** и официального Docker-контейнера **MTProxy**.
+Руководство и скрипт автоустановки для новейшего экспериментального WEB-транспорта Telegram (`telegramdesktop/tproxy-server`) на базе **Caddy** и официального Docker-контейнера **MTProxy**.
+
+> 🛑 **ВНИМАНИЕ! ПРОЧТИТЕ ПЕРЕД УСТАНОВКОЙ:**
+> 
+> 1. **ТОЛЬКО ДЛЯ ПК:** Данный WEB-протокол на текущий момент работает **исключительно в десктопной версии Telegram** (Windows, macOS, Linux). Мобильные клиенты (iOS, Android) этот вид прокси пока не поддерживают! На телефоне он работать не будет.
+> 2. **НУЖЕН СВОЙ СЕРВЕР:** Для установки вам потребуется собственный арендованный Linux-сервер (VPS/VDS) со статическим IP, привязанный домен и базовое понимание работы с консолью. Если у вас нет сервера — эта инструкция вам не подойдет.
+> 3. **ЭКСПЕРИМЕНТАЛЬНЫЙ СОФТ:** Это ранняя реализация протокола, предназначенная для тестирования и обхода жестких блокировок (DPI).
 
 ---
 
 ## 🏗 Архитектура решения
 
+```text
 Telegram Desktop (WebView2 / Edge)
-│
-│ HTTPS (HTTP/2 POST /api/v1/up & /api/v1/down)
-▼
+       │
+       │ HTTPS (HTTP/2 POST /api/v1/up & /api/v1/down)
+       ▼
 Cloudflare (DNS Only — серое облако)
-│
-▼
+       │
+       ▼
 Caddy Web Server (Port 443)
-│
-│ HTTP reverse proxy
-▼
+       │
+       │ HTTP reverse proxy
+       ▼
 tproxy-server Relay (Port 8444, Go daemon)
-│
-│ Raw MTProto TCP
-▼
+       │
+       │ Raw MTProto TCP
+       ▼
 Docker MTProxy Backend (Port 8443)
-│
-▼
+       │
+       ▼
 Telegram Infrastructure
+Telegram Desktop (WebView2): Маскирует трафик под стандартные HTTP/2 запросы (/api/v1/up и /api/v1/down) с реальными браузерными заголовками (Edge/Chrome).
 
+Cloudflare / DNS: Запись поддомена должна быть строго в режиме DNS only (серое облако). Проксирование Cloudflare (WAF/Challenge) блокирует скрытые фоновые запросы WebView.
 
-1. **Telegram Desktop (WebView2):** Маскирует трафик под стандартные HTTP/2 запросы (`/api/v1/up` и `/api/v1/down`) с реальными браузерными заголовками (Edge/Chrome).
-2. **Cloudflare / DNS:** Запись поддомена должна быть строго в режиме **DNS only** (серое облако). Проксирование Cloudflare (WAF/Challenge) блокирует скрытые фоновые запросы WebView.
-3. **Caddy (HTTPS 443):** Принимает TLS-трафик, терминирует сертификат и проксирует его локально.
-4. **tproxy-server (Relay 8444):** Демон Telegram на Go, разбирающий HTTP-обёртку, кадровые потоки и проверяющий секрет.
-5. **Docker MTProxy (Backend 8443):** Принимает очищенный трафик и отправляет его на сервера Telegram.
+Caddy (HTTPS 443): Принимает TLS-трафик, терминирует сертификат и проксирует его локально.
 
----
+tproxy-server (Relay 8444): Демон Telegram на Go, разбирающий HTTP-обёртку, кадровые потоки и проверяющий секрет.
 
-## 🚀 Пошаговая установка
+Docker MTProxy (Backend 8443): Принимает очищенный трафик и отправляет его на сервера Telegram.
 
-### 🔥 Автоматическая установка (Быстрый старт)
-
+🚀 Пошаговая установка
+🔥 Автоматическая установка (Быстрый старт)
 Вы можете развернуть всю инфраструктуру автоматически с помощью готового bash-скрипта. Он сам скачает исходники, скомпилирует ретранслятор, создаст нужные папки, раздаст права и запустит systemd-службу.
 
-```bash
+Bash
 # 1. Скачиваем скрипт
 wget [https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh](https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh)
 
@@ -50,9 +55,13 @@ chmod +x install.sh
 
 # 3. Запускаем (замените на ваш домен и 32-значный hex-секрет)
 sudo ./install.sh proxy.example.com YOUR_SECRET_32_HEX
-### 1. Запуск Backend MTProxy (Docker)
-Запускаем официальный контейнер на локальном порту `8443`:
-```bash
+(Если вы предпочитаете контролировать каждый шаг сборки, ниже приведена инструкция по ручной установке).
+
+🛠 Ручная установка
+1. Запуск Backend MTProxy (Docker)
+Запускаем официальный контейнер на локальном порту 8443:
+
+Bash
 docker run -d \
   --name tg-web-backend \
   --restart always \
