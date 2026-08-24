@@ -37,6 +37,20 @@ Telegram Infrastructure
 
 ## 🚀 Пошаговая установка
 
+### 🔥 Автоматическая установка (Быстрый старт)
+
+Вы можете развернуть всю инфраструктуру автоматически с помощью готового bash-скрипта. Он сам скачает исходники, скомпилирует ретранслятор, создаст нужные папки, раздаст права и запустит systemd-службу.
+
+```bash
+# 1. Скачиваем скрипт
+wget [https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh](https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh)
+
+# 2. Делаем скрипт исполняемым
+chmod +x install.sh
+
+# 3. Запускаем (замените на ваш домен и 32-значный hex-секрет)
+sudo ./install.sh proxy.example.com YOUR_SECRET_32_HEX
+
 ### 1. Запуск Backend MTProxy (Docker)
 Запускаем официальный контейнер на локальном порту `8443`:
 ```bash
