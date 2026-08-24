@@ -48,7 +48,7 @@ Docker MTProxy (Backend 8443): Принимает очищенный трафи�
 
 Bash
 # 1. Скачиваем скрипт
-wget [https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh](https://raw.githubusercontent.com/VyacheslavRO/telegram-web-proxy-setup/main/install.sh)
+wget https://raw.githubusercontent.com/Kaprojennoe/telegram-web-proxy-setup/main/install.sh
 
 # 2. Делаем скрипт исполняемым
 chmod +x install.sh
